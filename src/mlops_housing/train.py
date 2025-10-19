@@ -72,14 +72,20 @@ def train_and_register(data_path: str, tag: str = "rf") -> Dict[str, float]:
         }
 
         logger.info(f"Métricas finales: {metrics}")
+        # Dentro del bloque with mlflow.start_run():
+        input_example = X.iloc[[0]].astype(float)
 
-        # Log en MLflow
         mlflow.log_metrics(metrics)
         mlflow.log_param("model_type", "RandomForestRegressor")
         mlflow.log_param("n_estimators", 100)
 
-        # Guardamos el pipeline completo con MLflow
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        # Log del modelo con input_example y sin artifact_path (usamos name="model")
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            name="model",
+            input_example=input_example
+        )
+
 
         # Guardamos también en artifacts/ para que lo cargue la API fácilmente
         logger.info("Guardando artefactos en carpeta local artifacts/")
