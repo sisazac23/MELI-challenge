@@ -71,7 +71,7 @@ logs/
 secrets.json
 
 # Data and temp files
-*.csv
+#*.csv
 *.tsv
 *.parquet
 *.feather
@@ -80,7 +80,7 @@ secrets.json
 *.sqlite3
 *.pkl
 *.joblib
-data/
+#data/
 tmp/
 temp/
 
