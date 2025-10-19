@@ -99,3 +99,10 @@ __results__/
 *.swp
 *.swo
 *~
+
+# MLflow tracking
+mlruns/
+
+# Model artifacts
+artifacts/
+
