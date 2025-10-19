@@ -79,7 +79,7 @@ secrets.json
 *.db
 *.sqlite3
 *.pkl
-*.joblib
+#*.joblib
 #data/
 tmp/
 temp/
