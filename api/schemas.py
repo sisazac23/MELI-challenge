@@ -6,12 +6,13 @@ Usa Pydantic para validar y tipar los datos de entrada.
 """
 
 from pydantic import BaseModel, Field
+from typing import Literal
 
 class PredictRequest(BaseModel):
     CRIM: float = Field(..., description="Tasa de criminalidad per cápita en la ciudad.")
     ZN: float = Field(..., description="Proporción de terrenos residenciales zonificados para lotes grandes.")
     INDUS: float = Field(..., description="Proporción de acres de negocios no minoristas por ciudad.")
-    CHAS: float = Field(..., ge=0, le=1, description="Dummy Charles River (1 si limita con el río, 0 en caso contrario).")
+    CHAS: Literal[0,1] = Field(..., description="Dummy Charles River (1 si limita con el río, 0 en caso contrario).")
     NOX: float = Field(..., description="Concentración de óxidos de nitrógeno (partes por 10 millones).")
     RM: float = Field(..., description="Número promedio de habitaciones por vivienda.")
     AGE: float = Field(..., description="Proporción de unidades ocupadas por sus propietarios construidas antes de 1940.")
