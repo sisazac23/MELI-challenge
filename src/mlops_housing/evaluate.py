@@ -102,8 +102,8 @@ def evaluate_and_decide() -> int:
         print("[evaluate] No hay columna real_price aún.")
         return 0
 
-    window_days = _envint("EVAL_WINDOW_DAYS", 14)
-    min_feedback = _envint("EVAL_MIN_FEEDBACK", 30)
+    window_days = _envint("EVAL_WINDOW_DAYS", 1)
+    min_feedback = _envint("EVAL_MIN_FEEDBACK", 25)
     threshold = _envfloat("EVAL_THRESHOLD", 0.10)
 
     df_window = _filter_window(df, window_days)
