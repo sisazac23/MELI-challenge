@@ -384,6 +384,30 @@ docker run --rm -p 8000:8000 -v ./logs:/app/logs housing-api:latest
 
 - Publica en GHCR.
 
+```mermaid
+graph TD
+    subgraph "CI Pipeline"
+        A(pipeline.yml)
+        A -- "Ejecuta tests" --> A1[Tests OK?]
+        A1 -- "Construye imagen" --> A2(Imagen Docker)
+    end
+
+    subgraph "Monitoreo y Evaluación"
+        B(evaluate.yml)
+        B -- "Manualmente o por Cron" --> B1("python -m mlops_housing.evaluate")
+        B1 -- "Analiza rendimiento" --> B2{¿Degradación? (exit code 2)}
+    end
+
+    subgraph "CD Pipeline"
+        C(retrain_and_build.yml)
+        C -- "Reentrena modelo" --> C1[Nuevos artifacts]
+        C1 -- "Reconstruye imagen" --> C2[Nueva imagen Docker]
+        C2 -- "Publica imagen" --> C3(Publicado en GHCR)
+    end
+
+    B2 -- Sí --> C
+    B2 -- No --> D[Proceso finalizado]
+```
 
 ---
 
