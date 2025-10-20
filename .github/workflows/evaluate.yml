@@ -51,6 +51,6 @@ jobs:
             github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: "retrain.yml",
+              workflow_id: "retrain-and-build.yml",
               ref: "${{ github.ref }}"
             })
