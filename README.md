@@ -76,19 +76,12 @@ El código fuente sigue prácticas modulares dentro del paquete `mlops_housing`:
 
 
 | Archivo | Rol |
-
 |---------|-----|
-
 | `pipeline.py` | Define el pipeline de machine learning (preprocesamiento + modelo RandomForest). |
-
 | `train.py` | Entrena el modelo con un dataset dado y registra sus métricas. |
-
 | `registry.py` | Maneja la lectura/escritura de versiones del modelo (gestión en `artifacts/`). |
-
 | `api/app.py` | Implementa la API con FastAPI para predicción, feedback, versión y salud. |
-
 | `schemas.py` | Estructura y valida las features de entrada usando Pydantic. |
-
 | `evaluate.py` | Evalúa la calidad del modelo usando los registros recientes de predicción/feedback. |
 
 
@@ -226,17 +219,11 @@ uvicorn mlops_housing.api.app:app --reload --port 8000
 Rutas principales:
 
 | Endpoint | Método | Descripción |
-
 |----------|--------|-------------|
-
 | /predict | POST | Genera una predicción. |
-
 | /feedback | POST | Envía el valor real posterior a una predicción. |
-
 | /version | GET | Informa versión actual del modelo. |
-
 | /metrics | GET | Compatible para Prometheus. |
-
 | /healthz | GET | Confirma estado de servicio. |
 
 
