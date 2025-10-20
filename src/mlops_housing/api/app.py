@@ -5,6 +5,8 @@ API REST para predicción de precios de viviendas usando FastAPI.
 Carga automáticamente el modelo activo desde artifacts/version.json.
 """
 
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Response
 from loguru import logger
 import pandas as pd
@@ -19,12 +21,6 @@ from .schemas import PredictRequest, PredictResponse, FeedbackRequest
 from mlops_housing.registry import load_current  # Carga el modelo entrenado
 from mlops_housing.config import FEATURES
 
-# Crear instancia de FastAPI
-app = FastAPI(
-    title="Housing Price Prediction API",
-    version="1.0.0",
-    description="API para predecir precios de viviendas entrenada con RandomForest y registrada con MLflow."
-)
 
 # Variable global del modelo
 MODEL = None
@@ -39,13 +35,15 @@ LOG_PATH = Path("logs") / "predictions.csv"
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
-@app.on_event("startup")
-def load_model():
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
-    Intenta cargar el modelo en el arranque de la API.
-    Si falla, deja un flag indicando que el modelo no está disponible.
+    Gestiona los eventos de arranque y parada de la API.
+    Carga el modelo al iniciar.
     """
     global MODEL, MODEL_LOADED
+    logger.info("Iniciando API...")
     try:
         MODEL, run_dir = load_current()
         MODEL_LOADED = True
@@ -53,6 +51,19 @@ def load_model():
     except Exception as e:
         MODEL_LOADED = False
         logger.error(f"Error al cargar el modelo: {str(e)}")
+    
+    yield  # La API está lista para recibir peticiones
+
+    logger.info("Apagando API...")
+    
+
+# Crear instancia de FastAPI y registrar el manejador de eventos lifespan
+app = FastAPI(
+    title="Housing Price Prediction API",
+    version="1.0.0",
+    description="API para predecir precios de viviendas entrenada con RandomForest y registrada con MLflow.",
+    lifespan=lifespan # Se registra manejador de eventos
+)
 
 
 @app.get("/healthz")
@@ -100,7 +111,6 @@ def predict(payload: PredictRequest) -> PredictResponse:
         # Hacer predicción
         pred = MODEL.predict(X_input)[0]
         pred_float = round(float(pred), 3)
-        
 
         # Generar ID
         prediction_id = str(uuid.uuid4())
@@ -109,7 +119,8 @@ def predict(payload: PredictRequest) -> PredictResponse:
         row = {
             "id": prediction_id,
             "timestamp": datetime.utcnow().isoformat(),
-            **payload.dict(),
+            # --- CAMBIO 2: Reemplazar .dict() por .model_dump() ---
+            **payload.model_dump(),
             "predicted_price": pred_float,
             "real_price": None
         }
@@ -158,4 +169,3 @@ def feedback(payload: FeedbackRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudo actualizar el valor real."
         )
-
