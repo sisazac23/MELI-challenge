@@ -23,6 +23,8 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
           pip install mlflow
+        
+      - name: Preparar entorno de evaluacion
 
       - name: Ejecutar evaluación del modelo
         id: eval_run

@@ -93,7 +93,7 @@ def _filter_window(df: pd.DataFrame, window_days: int) -> pd.DataFrame:
 
 def evaluate_and_decide() -> int:
     if not LOG_PATH.exists():
-        print(f"[evaluate] No existe {LOG_PATH}.")
+        print(f"[evaluate] No existe {LOG_PATH}. Por lo que no se evalúa si hay degradación del modelo")
         return 0
 
     df = pd.read_csv(LOG_PATH)
