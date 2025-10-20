@@ -80,6 +80,7 @@ def version():
 def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
+
 @app.post("/predict", response_model=PredictResponse)
 def predict(payload: PredictRequest) -> PredictResponse:
     if not MODEL_LOADED:
@@ -98,7 +99,8 @@ def predict(payload: PredictRequest) -> PredictResponse:
 
         # Hacer predicción
         pred = MODEL.predict(X_input)[0]
-        pred_float = float(pred)
+        pred_float = round(float(pred), 3)
+        
 
         # Generar ID
         prediction_id = str(uuid.uuid4())
