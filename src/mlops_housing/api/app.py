@@ -8,6 +8,8 @@ Carga automáticamente el modelo activo desde artifacts/version.json.
 from fastapi import FastAPI, HTTPException, status
 from loguru import logger
 import pandas as pd
+import json
+from pathlib import Path
 
 from .schemas import PredictRequest, PredictResponse
 from mlops_housing.registry import load_current  # Carga el modelo entrenado
@@ -48,6 +50,19 @@ def health():
     Retorna un mensaje simple para comprobar disponibilidad.
     """
     return {"status": "ok", "message": "API is running"}
+
+@app.get("/version")
+def version():
+    try:
+        _, run_dir = load_current()
+        metrics_path = Path(run_dir) / "metrics.json"
+        metrics = {}
+        if metrics_path.exists():
+            metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        return {"run_dir": str(run_dir), "metrics": metrics}
+    except Exception as e:
+        logger.error(f"Error leyendo versión/metrics: {e}")
+        raise HTTPException(status_code=500, detail="No se pudo leer versión actual")
 
 
 @app.post("/predict", response_model=PredictResponse)
