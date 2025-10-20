@@ -1,0 +1,44 @@
+name: Evaluate Model Performance
+
+on:
+  workflow_dispatch:  # Permite lanzarlo manualmente
+  schedule:           # Ejecución diaria a medianoche
+    - cron: "0 0 * * *"
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install mlflow
+
+      - name: Ejecutar evaluación del modelo
+        id: eval_run
+        run: |
+          echo "Ejecutando evaluación..."
+          python -m mlops_housing.evaluate
+        continue-on-error: true
+
+      - name: Verificar resultado y disparar reentrenamiento si es necesario
+        if: steps.eval_run.outcome == 'success' && steps.eval_run.conclusion == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "retrain.yml",
+              ref: "${{ github.ref }}"
+            })
