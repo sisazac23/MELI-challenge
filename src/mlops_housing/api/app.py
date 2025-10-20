@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 import uuid
 
-from .schemas import PredictRequest, PredictResponse
+from .schemas import PredictRequest, PredictResponse, FeedbackRequest
 from mlops_housing.registry import load_current  # Carga el modelo entrenado
 from mlops_housing.config import FEATURES
 
@@ -118,7 +118,7 @@ def predict(payload: PredictRequest) -> PredictResponse:
         else:
             df_log.to_csv(LOG_PATH, index=False)
 
-        # 5️⃣ Devolver resultado
+        # Devolver resultado
         return PredictResponse(
             predicted_price=pred_float,
             id=prediction_id  
@@ -135,13 +135,25 @@ def predict(payload: PredictRequest) -> PredictResponse:
 
 
 @app.post("/feedback")
-def feedback(id: str, real_price: float):
-    df = pd.read_csv(LOG_PATH)
-    if id not in df["id"].values:
-        raise HTTPException(status_code=404, detail="ID no encontrado")
+def feedback(payload: FeedbackRequest):
+    try:
+        df = pd.read_csv(LOG_PATH)
 
-    df.loc[df["id"] == id, "real_price"] = real_price
-    df.to_csv(LOG_PATH, index=False)
-    
-    return {"message": "Valor real registrado correctamente"}
+        if payload.id not in df["id"].values:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ID no encontrado en el registro de predicciones."
+            )
+
+        df.loc[df["id"] == payload.id, "real_price"] = payload.real_price
+        df.to_csv(LOG_PATH, index=False)
+
+        return {"message": "Valor real actualizado correctamente"}
+
+    except Exception as e:
+        logger.error(f"Error al procesar feedback: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo actualizar el valor real."
+        )
 

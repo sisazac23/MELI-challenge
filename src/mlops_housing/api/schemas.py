@@ -26,3 +26,8 @@ class PredictRequest(BaseModel):
 class PredictResponse(BaseModel):
     id: str = Field(..., description="ID único de la predicción.")
     predicted_price: float = Field(..., description="Precio estimado de la vivienda en miles de dólares.")
+
+class FeedbackRequest(BaseModel):
+    id: str = Field(..., description="ID de la predicción generada por /predict.")
+    real_price: float = Field(..., description="Valor real observado para la predicción.")
+
