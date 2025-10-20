@@ -1,21 +1,30 @@
+# Reentrena el modelo
 name: Retrain Model
 
+# Disparador
 on:
   workflow_dispatch:  # Se puede disparar manualmente o desde evaluate.yml
 
+# Trabajos
 jobs:
   retrain:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      actions: write
+    
+    # Pasos
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
+      # Configurar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
+      # Instalar dependencias
       - name: Instalar dependencias
         run: |
           pip install --upgrade pip
@@ -23,12 +32,14 @@ jobs:
           pip install -e .
           pip install mlflow
 
+      # Ejecutar reentrenamiento
       - name: Ejecutar reentrenamiento
         run: |
           TAG=retrain_$(date +%Y%m%dT%H%M%S)
           echo "TAG=$TAG" >> $GITHUB_ENV
-          python -m mlops_housing.train --data_path data/HousingData.csv --tag $TAG
+          python -m mlops_housing.train --data_path data/new_dataset.csv --tag $TAG
 
+      # Subir artifacts generados para próxima etapa
       - name: Subir artifacts generados para próxima etapa
         uses: actions/upload-artifact@v4
         with:
@@ -36,6 +47,7 @@ jobs:
           path: artifacts
           retention-days: 7
 
+      # Disparar build_and_push.yml
       - name: Disparar build_and_push.yml
         uses: actions/github-script@v6
         with:

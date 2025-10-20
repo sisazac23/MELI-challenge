@@ -1,23 +1,32 @@
+# Evaluar el rendimiento del modelo y disparar reentrenamiento si es necesario
 name: Evaluate Model Performance
 
+# Disparador
 on:
   workflow_dispatch:  # Se puede ejecutar manualmente
   #schedule:           # Se ejecuta cada día a medianoche
   #  - cron: "0 0 * * *"
 
+# Trabajos
 jobs:
   evaluate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
 
+    # Pasos
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
+      # Configurar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
+      # Instalar dependencias
       - name: Instalar dependencias
         run: |
           pip install --upgrade pip
@@ -25,6 +34,7 @@ jobs:
           pip install -e .
           pip install mlflow
 
+      # Ejecutar evaluación del modelo
       - name: Ejecutar evaluación del modelo
         id: eval_run
         run: |
@@ -32,6 +42,7 @@ jobs:
           python -m mlops_housing.evaluate
         continue-on-error: true
 
+      # Disparar reentrenamiento 
       - name: Disparar reentrenamiento si hay degradación (exit code = 2)
         if: steps.eval_run.outcome == 'success' && steps.eval_run.conclusion == 'failure'
         uses: actions/github-script@v6
