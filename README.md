@@ -424,6 +424,7 @@ graph TD
 
     B2 -- Sí --> C
     B2 -- No --> D[Proceso finalizado]
+```
 
 ---
 
