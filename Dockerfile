@@ -44,6 +44,8 @@ COPY src ./src
 # Copiamos los artifacts (modelo entrenado) desde CI/CD o local
 COPY artifacts ./artifacts
 
+VOLUME /app/logs
+
 EXPOSE 8000
 
 CMD ["uvicorn", "mlops_housing.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
