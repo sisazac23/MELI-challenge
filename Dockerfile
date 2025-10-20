@@ -7,10 +7,14 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
+# Copiamos los archivos necesarios para la instalación
 COPY pyproject.toml setup.cfg requirements.txt ./
+COPY README.md ./
+COPY src ./src
+
+# Ahora, ejecutamos la instalación
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir .
-
 COPY src ./src
 
 ##########
@@ -29,7 +33,7 @@ FROM python:3.11-slim AS runtime
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app/src
 
 COPY --from=base /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=base /usr/local/bin /usr/local/bin
