@@ -1,0 +1,49 @@
+name: Build and Push Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact-name:
+        description: "Nombre del artifact del modelo a empaquetar en la imagen."
+        required: true
+        default: "new-model-artifacts"
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Descargar artifacts del modelo
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event.inputs.artifact-name }}
+          path: artifacts
+
+      - name: Login en GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extraer metadatos y etiquetas para Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # El nombre de la imagen será ghcr.io/sisazac23/MELI-challenge
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Construir y empujar la imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

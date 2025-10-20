@@ -1,17 +1,16 @@
 name: Retrain Model
 
 on:
-  workflow_dispatch:  # Permite lanzar el reentrenamiento a mano.
-  # También puede ser disparado desde evaluate.yml
+  workflow_dispatch:  # Se puede disparar manualmente o desde evaluate.yml
 
 jobs:
   retrain:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-        
+
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
@@ -26,7 +25,9 @@ jobs:
 
       - name: Ejecutar reentrenamiento
         run: |
-          python -m mlops_housing.train --data_path data/new_dataset.csv --tag retrain_$(date +%Y%m%dT%H%M%S) 
+          TAG=retrain_$(date +%Y%m%dT%H%M%S)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          python -m mlops_housing.train --data_path data/HousingData.csv --tag $TAG
 
       - name: Subir artifacts generados para próxima etapa
         uses: actions/upload-artifact@v4
@@ -34,3 +35,17 @@ jobs:
           name: new-model-artifacts
           path: artifacts
           retention-days: 7
+
+      - name: Disparar build_and_push.yml
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "build_and_push.yml",
+              ref: "${{ github.ref }}",
+              inputs: {
+                "artifact-name": "new-model-artifacts"
+              }
+            })
