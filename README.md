@@ -1,55 +1,447 @@
-### Reto técnico MercadoLibre: MLOPs#  MLOPS Housing Price Predictor – Pipeline de Producción con CI/CD y Docker
+# MLOps Housing Price Predictor – Pipeline Completo con CI/CD, Docker y Reentrenamiento Automático
 
-Este proyecto implementa un flujo completo de **MLOps** para entrenar, versionar, desplegar, evaluar y reentrenar automáticamente un modelo de predicción de precios de viviendas basado en un dataset tipo Housing (Boston dataset como ejemplo académico).
 
-El objetivo es simular un entorno **real de producción**, incorporando:
 
-- Entrenamiento reproducible  
-- API REST con FastAPI  
-- Versionado y trazabilidad de modelos (MLflow + artifacts persistentes)  
-- Registro de predicciones y recolección de feedback  
-- Evaluación automática del rendimiento en producción  
-- Reentrenamiento automático (CI/CD)  
-- Construcción y publicación de imágenes Docker inmutables  
-- Pipeline CI/CD completo con GitHub Actions  
+Este proyecto implementa un flujo completo de MLOps aplicado a un modelo de predicción de precios de viviendas (dataset Housing/Boston como referencia académica). El enfoque está diseñado para simular condiciones reales de producción, incorporando entrenamiento reproducible, despliegue vía API, monitoreo, recolección de feedback, evaluación periódica del rendimiento, reentrenamiento condicionado y republicación automatizada del modelo como imagen Docker inmutable mediante pipelines CI/CD en GitHub Actions.
+
+
 
 ---
 
-## Tecnologías utilizadas
 
-| Área | Herramienta |
-|------|------------|
-| Lenguaje | Python 3.11 |
-| Framework API | FastAPI + Uvicorn |
-| Modelos ML | Scikit-learn |
-| Trazabilidad | MLflow |
-| Contenerización | Docker (multi-stage) |
-| CI/CD | GitHub Actions |
-| Métricas | Compatible con Prometheus |
-| Validación de inputs | Pydantic |
-| Logging & Feedback | CSV persistente o base centralizable |
+
+## 1. Objetivo del proyecto
+
+
+
+Demostrar un ciclo de vida MLOps completo:
+
+
+
+1. Entrenar un modelo inicial.
+
+2. Servirlo mediante una API REST.
+
+3. Capturar predicciones y feedback del usuario.
+
+4. Monitorear periódicamente el rendimiento del modelo.
+
+5. Detectar posibles degradaciones.
+
+6. Ejecutar automáticamente un proceso de reentrenamiento.
+
+7. Construir y publicar una nueva versión del modelo como contenedor Docker de producción.
+
+8. Mantener versionado y trazabilidad en todo el proceso.
+
+
 
 ---
 
-## Estructura del proyecto
 
-```plaintext
+
+## 2. Arquitectura MLOps implementada
+
+
+
+El flujo implementado sigue el siguiente ciclo:
+
+
+graph TD
+    subgraph "Fase Inicial"
+        A[Entrenamiento Inicial] --> B[Despliegue en API] --> C[Predicciones en producción]
+    end
+
+    subgraph "Ciclo de Reentrenamiento"
+        C --> D[Feedback real]
+        D --> E[evaluate.py]
+        E --> F{¿Degradación > 10%?}
+        F -- No --> G[Se detiene]
+        F -- Sí --> H[retrain.yml]
+        H --> I[Nuevo modelo ► build_and_push.yml]
+        I --> J[Publicación Docker GHCR]
+        J --> K[Reemplazo/escala de despliegue]
+    end
+
+
+---
+
+
+## 3. Explicación del pipeline interno (`mlops_housing`)
+
+
+
+El código fuente sigue prácticas modulares dentro del paquete `mlops_housing`:
+
+
+
+| Archivo | Rol |
+
+|---------|-----|
+
+| `pipeline.py` | Define el pipeline de machine learning (preprocesamiento + modelo RandomForest). |
+
+| `train.py` | Entrena el modelo con un dataset dado y registra sus métricas. |
+
+| `registry.py` | Maneja la lectura/escritura de versiones del modelo (gestión en `artifacts/`). |
+
+| `api/app.py` | Implementa la API con FastAPI para predicción, feedback, versión y salud. |
+
+| `schemas.py` | Estructura y valida las features de entrada usando Pydantic. |
+
+| `evaluate.py` | Evalúa la calidad del modelo usando los registros recientes de predicción/feedback. |
+
+
+
+---
+
+
+
+## 4. Flujo completo de uso en producción
+
+
+
+1. El modelo se entrena con `train.py` y se almacena bajo `artifacts/`.
+
+2. Se construye una imagen Docker que contiene el modelo.
+
+3. La API se despliega para uso.
+
+4. Predicciones se almacenan en `logs/predictions.csv`.
+
+5. Los usuarios envían valores reales vía `/feedback`.
+
+6. `evaluate.py` analiza métricas basadas en datos recientes.
+
+7. Si se detecta degradación (>10% peor que baseline), se activa reentrenamiento.
+
+8. GitHub Actions ejecuta `retrain.yml`, genera un nuevo modelo e inicia `build_and_push.yml`.
+
+9. La nueva imagen se publica en GHCR.
+
+
+
+---
+
+
+
+## 5. Estructura del proyecto
+
+
+
+### Arbol de Directorios
+
+```text
 MELI-challenge/
+├── .github/workflows/
+│   ├── build_and_push.yml
+│   ├── ci.yml
+│   ├── evaluate.yml
+│   └── retrain.yml
+├── artifacts/
+├── data/
+├── logs/
 ├── src/mlops_housing/
-│   ├── pipeline.py         # Construcción del pipeline de ML
-│   ├── train.py            # Entrenamiento y registro del modelo
-│   ├── registry.py         # Gestión de versiones del modelo
-│   ├── api/app.py          # API REST FastAPI
-│   ├── schemas.py          # Validación de datos de entrada
-│   ├── evaluate.py         # Evaluación del modelo en producción
-│   └── ...
-├── artifacts/              # Modelo activo en producción
-├── logs/                   # Feedback y predicciones en runtime
-├── data/                   # Dataset base
+│   ├── api/
+│   │   └── app.py
+│   ├── __init__.py
+│   ├── evaluate.py
+│   ├── pipeline.py
+│   ├── registry.py
+│   ├── schemas.py
+│   └── train.py
 ├── Dockerfile
-├── requirements.txt
-└── .github/workflows/
-    ├── ci.yml              # Validación + build Docker
-    ├── evaluate.yml        # Evalúa degradación y dispara retrain
-    ├── retrain.yml         # Reentrena modelo y sube artifacts
-    └── build_and_push.yml  # Genera imagen con nuevo modelo
+└── requirements.txt
+```
+
+
+
+---
+
+
+
+## 6. Instalación local
+
+
+
+Esta seccion describe los pasos para configurar el entorno virtual de Python e instalar las dependencias del proyecto.
+
+## Comandos de Instalacion
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .
+```
+
+
+---
+
+
+
+## 7. Entrenamiento manual local
+
+
+Este comando ejecuta el script de entrenamiento del modelo, pasandole los parametros necesarios para localizar los datos y etiquetar la ejecucion.
+
+### Comando de Ejemplo
+
+```bash
+python -m mlops_housing.train --data_path data/HousingData.csv --tag primera_version
+```
+
+
+---
+
+
+
+## 8. Ejecución de pruebas unitarias (opcional)
+
+
+Este comando utiliza la libreria `pytest` para descubrir y ejecutar automaticamente las pruebas unitarias del proyecto, asegurando que todos los componentes funcionen correctamente.
+
+### Comando Principal
+
+```bash
+pytest -v
+```
+
+
+---
+
+
+
+## 9. Arranque de la API en local
+
+
+### Comando Principal
+
+```bash
+uvicorn mlops_housing.api.app:app --reload --port 8000
+
+
+
+Rutas principales:
+
+| Endpoint | Método | Descripción |
+
+|----------|--------|-------------|
+
+| /predict | POST | Genera una predicción. |
+
+| /feedback | POST | Envía el valor real posterior a una predicción. |
+
+| /version | GET | Informa versión actual del modelo. |
+
+| /metrics | GET | Compatible para Prometheus. |
+
+| /healthz | GET | Confirma estado de servicio. |
+
+
+
+El endpoint `/predict` espera una peticion `POST` que contenga un cuerpo en formato JSON con las 13 caracteristicas (features) que el modelo necesita para realizar una prediccion. Estas caracteristicas corresponden a diferentes atributos de una vivienda, como la tasa de criminalidad, la cantidad de habitaciones, la distancia a centros de empleo, entre otros.
+
+### Ejemplo de JSON Valido
+
+```json
+{
+    "CRIM": 0.1,
+    "ZN": 18.0,
+    "INDUS": 2.31,
+    "CHAS": 0,
+    "NOX": 0.538,
+    "RM": 6.575,
+    "AGE": 65.2,
+    "DIS": 4.09,
+    "RAD": 1,
+    "TAX": 296,
+    "PTRATIO": 15.3,
+    "B": 396.9,
+    "LSTAT": 4.98
+}
+```
+
+
+
+El endpoint `/feedback` permite registrar el valor real (ground truth) asociado a una prediccion que fue realizada previamente. Este proceso es fundamental para monitorear el rendimiento del modelo a lo largo del tiempo y detectar si su precision se esta degradando.
+
+### Ejemplo de JSON Valido
+
+```json
+{
+    "prediction_id": "175e49cf-e773-4625-ae36-9220b6ff1215",
+    "real_price": 23.4
+}
+```
+
+
+### Ejemplos de Uso con CURL
+
+A continuacion se muestran ejemplos practicos de como interactuar con los endpoints de la API utilizando la herramienta de linea de comandos `CURL`.
+
+---
+
+### Realizar una Prediccion (`/predict`)
+
+Este comando envia una peticion `POST` al endpoint `/predict` con las 13 caracteristicas de una vivienda para obtener una prediccion de su precio.
+
+### Comando
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8000/predict' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "CRIM": 0.027, "ZN": 0, "INDUS": 7.07, "CHAS": 0, "NOX": 0.469,
+    "RM": 6.421, "AGE": 78.9, "DIS": 4.96, "RAD": 2, "TAX": 242,
+    "PTRATIO": 17.8, "B": 396.9, "LSTAT": 9.14
+  }'
+```
+
+### Respuesta Esperada
+
+La API devolvera un objeto JSON con el precio predicho y un `id` unico que puede ser usado posteriormente para enviar feedback.
+
+```json
+{
+  "predicted_price": 21.6,
+  "id": "175e49cf-e773-4625-ae36-9220b6ff1215"
+}
+```
+
+### Enviar Feedback (`/feedback`)
+
+Este comando envia el precio real de una vivienda que fue objeto de una prediccion anterior. Se utiliza el `id` devuelto por el endpoint `/predict` para asociar el valor real con la prediccion correspondiente.
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8000/feedback' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "175e49cf-e773-4625-ae36-9220b6ff1215",
+    "real_price": 24.5
+  }'
+```
+
+
+
+*Nota: Se asume que una prediccion anterior devolvio el ID "175e49cf-e773-4625-ae36-9220b6ff1215".*
+
+Se responderá con un mensaje de confirmación indicando que el feedback ha sido registrado correctamente.
+
+```json
+{
+  "message": "Valor real actualizado correctamente"
+}
+```
+
+
+## 10. Uso con Docker
+
+
+
+### Construcción de imagen
+
+
+```bash
+docker build -t housing-api:latest –target runtime .
+```
+
+
+
+### Ejecución en modo producción con persistencia:
+
+Ejecutando el contenedor Docker, exponiendo el puerto 8000 y montando un volumen local para persistir los logs de predicciones y feedback. Así podremos reevaluar el modelo en el futuro y saber si ha habido degradación.
+
+```bash
+docker run --rm -p 8000:8000 -v ./logs:/app/logs housing-api:latest
+```
+
+
+---
+
+
+
+## 11. CI/CD en GitHub Actions
+
+
+
+### `pipeline.yml`:
+
+- Ejecuta tests.
+
+- Construye la imagen Docker para validar integridad.
+
+
+
+### `evaluate.yml`:
+
+- Se activa manualmente o por cron.
+
+- Ejecuta `python -m mlops_housing.evaluate`.
+
+- Si el script retorna `exit code 2` (degradación detectada), dispara `retrain_and_build.yml`.
+
+
+
+### `retrain_and_build.yml`:
+
+- Reentrena el modelo.
+
+- Genera nuevos artifacts.
+
+- Reconstruye imagen Docker con el nuevo modelo.
+
+- Publica en GHCR.
+
+
+---
+
+
+
+## 12. Mejores prácticas futuras y roadmap
+
+
+
+| Mejora | Razón |
+
+|--------|------|
+
+| Almacenamiento de feedback en S3/BigQuery | Para análisis y reentrenamiento con datos reales. |
+
+| Feature Store (Feast) | Versionado consistente de features. |
+
+| Orquestación con Airflow o Prefect | Creación de DAG completo (entrenar → publicar → evaluar). |
+
+| Canary Deploy | Validación controlada en Kubernetes. |
+
+| Prometheus + Grafana | Métricas y alertas en tiempo real. |
+
+| DVC para datos | Versionado de datasets. |
+
+
+
+---
+
+
+
+## 13. Uso de Inteligencia Artificial en el desarrollo
+
+
+
+| Herramienta | Rol |
+
+|-------------|-----|
+
+| GitHub Copilot | Ayuda en autocompletado y generación parcial de código. |
+
+| Gemini | Evaluación y recomendaciones sobre la estructura del repositorio. |
+
+| ChatGPT | Diseño asistido del pipeline CI/CD, construcción de workflows YAML, explicación MLOps. |
+
+
+
+
+
