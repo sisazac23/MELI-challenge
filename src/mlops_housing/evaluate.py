@@ -103,7 +103,7 @@ def evaluate_and_decide() -> int:
         return 0
 
     window_days = _envint("EVAL_WINDOW_DAYS", 1)
-    min_feedback = _envint("EVAL_MIN_FEEDBACK", 25)
+    min_feedback = _envint("EVAL_MIN_FEEDBACK", 20)
     threshold = _envfloat("EVAL_THRESHOLD", 0.10)
 
     df_window = _filter_window(df, window_days)
