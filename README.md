@@ -58,8 +58,8 @@ graph TD
         D --> E[evaluate.py]
         E --> F{¿Degradación > 10%?}
         F -- No --> G[Se detiene]
-        F -- Sí --> H[retrain.yml]
-        H --> I[Nuevo modelo ► build_and_push.yml]
+        F -- Sí --> H[retrain_and_build.yml]
+        H --> I[Nuevo modelo]
         I --> J[Publicación Docker GHCR]
         J --> K[Reemplazo/escala de despliegue]
     end
