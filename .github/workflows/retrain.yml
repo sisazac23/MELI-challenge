@@ -1,54 +1,58 @@
-# Reentrena el modelo
+# Reentrenar el modelo y subir artifacts
 name: Retrain Model
 
 # Disparador
 on:
-  workflow_dispatch:  # Se puede disparar manualmente o desde evaluate.yml
+  workflow_dispatch: # Permite lanzarlo manualmente
 
 # Trabajos
 jobs:
-  retrain:
+  retrain_and_upload:
     runs-on: ubuntu-latest
+    # Permisos necesarios para disparar el siguiente workflow
     permissions:
-      contents: read
       actions: write
-    
-    # Pasos
+
+    #Pasos
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      # Configurar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      # Instalar dependencias
       - name: Instalar dependencias
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -e .
-          pip install mlflow
-
-      # Ejecutar reentrenamiento
-      - name: Ejecutar reentrenamiento
+          pip install .
+      
+      - name: Ejecutar reentrenamiento del modelo
+        id: training_run
         run: |
-          TAG=retrain_$(date +%Y%m%dT%H%M%S)
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          python -m mlops_housing.train --data_path data/new_dataset.csv --tag $TAG
+          # Generamos un nombre único para el tag del modelo
+          TIMESTAMP=$(date +%Y%m%dT%H%M%S)
+          MODEL_TAG="retrain-${TIMESTAMP}"
+          echo "Training new model with tag: ${MODEL_TAG}"
+          
+          # Ejecutamos el script de entrenamiento
+          # Se usa PYTHONPATH para que Python encuentre el módulo mlops_housing
+          PYTHONPATH=src python -m mlops_housing.train --tag ${MODEL_TAG}
 
-      # Subir artifacts generados para próxima etapa
-      - name: Subir artifacts generados para próxima etapa
+          # Guardamos el nombre del artifact para usarlo luego
+          echo "artifact_name=model-artifacts-${MODEL_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Subir artifacts del nuevo modelo
         uses: actions/upload-artifact@v4
         with:
-          name: new-model-artifacts
-          path: artifacts
-          retention-days: 7
+          name: ${{ steps.training_run.outputs.artifact_name }}
+          path: artifacts/
+          retention-days: 5 # Guardar el artifact por 5 días
 
-      # Disparar build_and_push.yml
-      - name: Disparar build_and_push.yml
+      - name: Disparar workflow de Build and Push
+        if: success() # Solo se ejecuta si los pasos anteriores fueron exitosos
         uses: actions/github-script@v6
         with:
           script: |
@@ -58,6 +62,6 @@ jobs:
               workflow_id: "build_and_push.yml",
               ref: "${{ github.ref }}",
               inputs: {
-                "artifact-name": "new-model-artifacts"
+                "artifact-name": "${{ steps.training_run.outputs.artifact_name }}"
               }
             })
