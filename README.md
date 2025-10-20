@@ -220,7 +220,7 @@ pytest -v
 
 ```bash
 uvicorn mlops_housing.api.app:app --reload --port 8000
-
+```
 
 
 Rutas principales:
@@ -403,44 +403,24 @@ docker run --rm -p 8000:8000 -v ./logs:/app/logs housing-api:latest
 
 ## 12. Mejores prácticas futuras y roadmap
 
-
-
 | Mejora | Razón |
-
-|--------|------|
-
+|-------------------------------------------|----------------------------------------------------------|
 | Almacenamiento de feedback en S3/BigQuery | Para análisis y reentrenamiento con datos reales. |
-
 | Feature Store (Feast) | Versionado consistente de features. |
-
 | Orquestación con Airflow o Prefect | Creación de DAG completo (entrenar → publicar → evaluar). |
-
 | Canary Deploy | Validación controlada en Kubernetes. |
-
 | Prometheus + Grafana | Métricas y alertas en tiempo real. |
-
 | DVC para datos | Versionado de datasets. |
-
-
 
 ---
 
-
-
 ## 13. Uso de Inteligencia Artificial en el desarrollo
 
-
-
 | Herramienta | Rol |
-
-|-------------|-----|
-
+|--------------|-------------------------------------------------------------------------------------------|
 | GitHub Copilot | Ayuda en autocompletado y generación parcial de código. |
-
 | Gemini | Evaluación y recomendaciones sobre la estructura del repositorio. |
-
 | ChatGPT | Diseño asistido del pipeline CI/CD, construcción de workflows YAML, explicación MLOps. |
-
 
 
 
