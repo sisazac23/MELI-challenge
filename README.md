@@ -47,6 +47,7 @@ Demostrar un ciclo de vida MLOps completo:
 El flujo implementado sigue el siguiente ciclo:
 
 
+```mermaid
 graph TD
     subgraph "Fase Inicial"
         A[Entrenamiento Inicial] --> B[Despliegue en API] --> C[Predicciones en producción]
@@ -62,6 +63,7 @@ graph TD
         I --> J[Publicación Docker GHCR]
         J --> K[Reemplazo/escala de despliegue]
     end
+```
 
 
 ---
@@ -108,7 +110,7 @@ El código fuente sigue prácticas modulares dentro del paquete `mlops_housing`:
 
 7. Si se detecta degradación (>10% peor que baseline), se activa reentrenamiento.
 
-8. GitHub Actions ejecuta `retrain.yml`, genera un nuevo modelo e inicia `build_and_push.yml`.
+8. GitHub Actions ejecuta `retrain_and_build.yml`, genera un nuevo modelo.
 
 9. La nueva imagen se publica en GHCR.
 
@@ -122,15 +124,14 @@ El código fuente sigue prácticas modulares dentro del paquete `mlops_housing`:
 
 
 
-### Arbol de Directorios
+### Árbol de Directorios
 
 ```text
 MELI-challenge/
 ├── .github/workflows/
-│   ├── build_and_push.yml
-│   ├── ci.yml
+│   ├── pipeline.yml
 │   ├── evaluate.yml
-│   └── retrain.yml
+│   └── retrain_and_build.yml
 ├── artifacts/
 ├── data/
 ├── logs/
@@ -157,9 +158,9 @@ MELI-challenge/
 
 
 
-Esta seccion describe los pasos para configurar el entorno virtual de Python e instalar las dependencias del proyecto.
+Esta sección describe los pasos para configurar el entorno virtual de Python e instalar las dependencias del proyecto.
 
-## Comandos de Instalacion
+## Comandos de Instalación
 
 ```bash
 python -m venv venv
@@ -177,7 +178,7 @@ pip install -e .
 ## 7. Entrenamiento manual local
 
 
-Este comando ejecuta el script de entrenamiento del modelo, pasandole los parametros necesarios para localizar los datos y etiquetar la ejecucion.
+Este comando ejecuta el script de entrenamiento del modelo, pasándole los parámetros necesarios para localizar los datos y etiquetar la ejecución.
 
 ### Comando de Ejemplo
 
@@ -193,7 +194,7 @@ python -m mlops_housing.train --data_path data/HousingData.csv --tag primera_ver
 ## 8. Ejecución de pruebas unitarias (opcional)
 
 
-Este comando utiliza la libreria `pytest` para descubrir y ejecutar automaticamente las pruebas unitarias del proyecto, asegurando que todos los componentes funcionen correctamente.
+Este comando utiliza la librería `pytest` para descubrir y ejecutar automáticamente las pruebas unitarias del proyecto, asegurando que todos los componentes funcionen correctamente.
 
 ### Comando Principal
 
@@ -228,9 +229,9 @@ Rutas principales:
 
 
 
-El endpoint `/predict` espera una peticion `POST` que contenga un cuerpo en formato JSON con las 13 caracteristicas (features) que el modelo necesita para realizar una prediccion. Estas caracteristicas corresponden a diferentes atributos de una vivienda, como la tasa de criminalidad, la cantidad de habitaciones, la distancia a centros de empleo, entre otros.
+El endpoint `/predict` espera una petición `POST` que contenga un cuerpo en formato JSON con las 13 características (features) que el modelo necesita para realizar una predicción. Estas características corresponden a diferentes atributos de una vivienda, como la tasa de criminalidad, la cantidad de habitaciones, la distancia a centros de empleo, entre otros.
 
-### Ejemplo de JSON Valido
+### Ejemplo de JSON válido
 
 ```json
 {
@@ -252,9 +253,9 @@ El endpoint `/predict` espera una peticion `POST` que contenga un cuerpo en form
 
 
 
-El endpoint `/feedback` permite registrar el valor real (ground truth) asociado a una prediccion que fue realizada previamente. Este proceso es fundamental para monitorear el rendimiento del modelo a lo largo del tiempo y detectar si su precision se esta degradando.
+El endpoint `/feedback` permite registrar el valor real (ground truth) asociado a una predicción que fue realizada previamente. Este proceso es fundamental para monitorear el rendimiento del modelo a lo largo del tiempo y detectar si su precisión se está degradando.
 
-### Ejemplo de JSON Valido
+### Ejemplo de JSON válido
 
 ```json
 {
@@ -266,13 +267,13 @@ El endpoint `/feedback` permite registrar el valor real (ground truth) asociado 
 
 ### Ejemplos de Uso con CURL
 
-A continuacion se muestran ejemplos practicos de como interactuar con los endpoints de la API utilizando la herramienta de linea de comandos `CURL`.
+A continuación se muestran ejemplos prácticos de cómo interactuar con los endpoints de la API utilizando la herramienta de línea de comandos `CURL`.
 
 ---
 
-### Realizar una Prediccion (`/predict`)
+### Realizar una Predicción (`/predict`)
 
-Este comando envia una peticion `POST` al endpoint `/predict` con las 13 caracteristicas de una vivienda para obtener una prediccion de su precio.
+Este comando envía una petición `POST` al endpoint `/predict` con las 13 características de una vivienda para obtener una predicción de su precio.
 
 ### Comando
 
@@ -289,7 +290,7 @@ curl -X 'POST' \
 
 ### Respuesta Esperada
 
-La API devolvera un objeto JSON con el precio predicho y un `id` unico que puede ser usado posteriormente para enviar feedback.
+La API devolverá un objeto JSON con el precio predicho y un `id` único que puede ser usado posteriormente para enviar feedback.
 
 ```json
 {
@@ -300,7 +301,7 @@ La API devolvera un objeto JSON con el precio predicho y un `id` unico que puede
 
 ### Enviar Feedback (`/feedback`)
 
-Este comando envia el precio real de una vivienda que fue objeto de una prediccion anterior. Se utiliza el `id` devuelto por el endpoint `/predict` para asociar el valor real con la prediccion correspondiente.
+Este comando envía el precio real de una vivienda que fue objeto de una predicción anterior. Se utiliza el `id` devuelto por el endpoint `/predict` para asociar el valor real con la predicción correspondiente.
 
 ```bash
 curl -X 'POST' \
@@ -314,7 +315,7 @@ curl -X 'POST' \
 
 
 
-*Nota: Se asume que una prediccion anterior devolvio el ID "175e49cf-e773-4625-ae36-9220b6ff1215".*
+*Nota: Se asume que una predicción anterior devolvió el ID "175e49cf-e773-4625-ae36-9220b6ff1215".*
 
 Se responderá con un mensaje de confirmación indicando que el feedback ha sido registrado correctamente.
 
