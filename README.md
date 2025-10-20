@@ -148,7 +148,14 @@ MELI-challenge/
 └── requirements.txt
 ```
 
+### Análisis Exploratorio de Datos (EDA)
 
+Adicionalmente al código de producción, el repositorio incluye un Jupyter Notebook con el análisis exploratorio de datos (EDA) inicial.
+
+* **Ubicación**: `notebook/data_exploration.ipynb`
+* **Propósito**: Este notebook contiene la carga inicial de datos, visualizaciones, análisis de correlaciones y las primeras hipótesis que guiaron el diseño del pipeline de machine learning.
+
+> **Nota**: El contenido de este notebook tiene fines de investigación y contextualización. No es necesario ejecutarlo para entrenar o desplegar el modelo, ya que el pipeline de producción (`mlops_housing/pipeline.py`) encapsula todos los pasos de preprocesamiento requeridos.
 
 ---
 
@@ -395,7 +402,7 @@ graph TD
     subgraph "Monitoreo y Evaluación"
         B(evaluate.yml)
         B -- "Manualmente o por Cron" --> B1("python -m mlops_housing.evaluate")
-        B1 -- "Analiza rendimiento" --> B2{¿Degradación? (exit code 2)}
+        B1 -- "Analiza rendimiento" --> B2{Degradación (exit code 2)}
     end
 
     subgraph "CD Pipeline"
