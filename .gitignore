@@ -60,10 +60,6 @@ dmypy.json
 .pyre/
 .pytype/
 
-# Logs
-*.log
-logs/
-
 # Environment variables
 .env
 .env.*
