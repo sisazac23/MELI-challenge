@@ -65,6 +65,16 @@ graph TD
     end
 ```
 
+## 2.1. Stack Tecnológico Principal
+
+El proyecto está construido sobre un conjunto de librerías modernas y robustas de Python para machine learning y desarrollo de APIs. Las más destacadas son:
+
+* **Servidor API**: `FastAPI` para construir una API REST de alto rendimiento.
+* **Validación de Datos**: `Pydantic` para la validación y serialización de los datos de entrada/salida de la API.
+* **Machine Learning**: `Scikit-learn` para la construcción del pipeline de entrenamiento y el modelo (`RandomForestRegressor`).
+* **Manipulación de Datos**: `Pandas` para la carga y manipulación eficiente de los datos.
+* **Monitoreo**: `Prometheus Client` para la exposición de métricas clave de la API.
+
 
 ---
 
@@ -402,7 +412,7 @@ graph TD
     subgraph "Monitoreo y Evaluación"
         B(evaluate.yml)
         B -- "Manualmente o por Cron" --> B1("python -m mlops_housing.evaluate")
-        B1 -- "Analiza rendimiento" --> B2{Degradación (exit code 2)}
+        B1 -- "Analiza rendimiento" --> B2{Degradacion (exit code 2)}
     end
 
     subgraph "CD Pipeline"
