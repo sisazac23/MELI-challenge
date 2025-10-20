@@ -24,4 +24,5 @@ class PredictRequest(BaseModel):
     LSTAT: float = Field(..., description="% de población con bajo estatus socioeconómico.")
 
 class PredictResponse(BaseModel):
+    id: str = Field(..., description="ID único de la predicción.")
     predicted_price: float = Field(..., description="Precio estimado de la vivienda en miles de dólares.")

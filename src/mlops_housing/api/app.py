@@ -5,11 +5,15 @@ API REST para predicción de precios de viviendas usando FastAPI.
 Carga automáticamente el modelo activo desde artifacts/version.json.
 """
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Response
 from loguru import logger
 import pandas as pd
 import json
 from pathlib import Path
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+import time
+from datetime import datetime
+import uuid
 
 from .schemas import PredictRequest, PredictResponse
 from mlops_housing.registry import load_current  # Carga el modelo entrenado
@@ -25,6 +29,14 @@ app = FastAPI(
 # Variable global del modelo
 MODEL = None
 MODEL_LOADED = False
+
+# Métricas Prometheus
+PRED_COUNTER = Counter("pred_requests_total", "Total de requests a /predict")
+PRED_LATENCY = Histogram("pred_latency_seconds", "Latencia de /predict en segundos")
+
+# Logs
+LOG_PATH = Path("logs") / "predictions.csv"
+LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 @app.on_event("startup")
@@ -64,27 +76,72 @@ def version():
         logger.error(f"Error leyendo versión/metrics: {e}")
         raise HTTPException(status_code=500, detail="No se pudo leer versión actual")
 
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(payload: PredictRequest) -> PredictResponse:
-    
     if not MODEL_LOADED:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Modelo no disponible. Entrene un modelo antes de predecir."
         )
-    
+
+    start_time = time.time()  
     try:
+        PRED_COUNTER.inc()  
+
+        # Extraer valores en el orden correcto
         feature_values = [getattr(payload, feature) for feature in FEATURES]
         X_input = pd.DataFrame([feature_values], columns=FEATURES)
 
+        # Hacer predicción
         pred = MODEL.predict(X_input)[0]
-        pred = round(float(pred), 2)
-        return PredictResponse(predicted_price=float(pred))
+        pred_float = float(pred)
+
+        # Generar ID
+        prediction_id = str(uuid.uuid4())
+
+        # Loggear predicción
+        row = {
+            "id": prediction_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            **payload.dict(),
+            "predicted_price": pred_float,
+            "real_price": None
+        }
+
+        df_log = pd.DataFrame([row])
+        if LOG_PATH.exists():
+            df_log.to_csv(LOG_PATH, mode="a", header=False, index=False)
+        else:
+            df_log.to_csv(LOG_PATH, index=False)
+
+        # 5️⃣ Devolver resultado
+        return PredictResponse(
+            predicted_price=pred_float,
+            id=prediction_id  
+        )
 
     except Exception as e:
         logger.error(f"Error en la predicción: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Hubo un error procesando la predicción. Verifica los datos o intenta nuevamente."
+            detail="Hubo un error procesando la solicitud."
         )
+    finally:
+         PRED_LATENCY.observe(time.time() - start_time)  
+
+
+@app.post("/feedback")
+def feedback(id: str, real_price: float):
+    df = pd.read_csv(LOG_PATH)
+    if id not in df["id"].values:
+        raise HTTPException(status_code=404, detail="ID no encontrado")
+
+    df.loc[df["id"] == id, "real_price"] = real_price
+    df.to_csv(LOG_PATH, index=False)
+    
+    return {"message": "Valor real registrado correctamente"}
+
