@@ -1,0 +1,36 @@
+name: Retrain Model
+
+on:
+  workflow_dispatch:  # Permite lanzar el reentrenamiento a mano.
+  # También puede ser disparado desde evaluate.yml
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install mlflow
+
+      - name: Ejecutar reentrenamiento
+        run: |
+          python -m mlops_housing.train --data_path data/new_dataset.csv --tag retrain_$(date +%Y%m%dT%H%M%S) 
+
+      - name: Subir artifacts generados para próxima etapa
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-model-artifacts
+          path: artifacts
+          retention-days: 7
