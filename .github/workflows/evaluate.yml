@@ -42,7 +42,7 @@ jobs:
           python -m mlops_housing.evaluate
         continue-on-error: true
 
-      # Disparar reentrenamiento 
+      # Disparar reentrenamiento si falla la evaluación
       - name: Disparar reentrenamiento si hay degradación (exit code = 2)
         if: steps.eval_run.outcome == 'success' && steps.eval_run.conclusion == 'failure'
         uses: actions/github-script@v6

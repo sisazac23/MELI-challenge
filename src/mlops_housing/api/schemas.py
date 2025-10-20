@@ -9,6 +9,10 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 class PredictRequest(BaseModel):
+    """
+    Esquema para la solicitud de predicción.
+    Define las 13 características necesarias para predecir el precio de una vivienda.
+    """
     CRIM: float = Field(..., description="Tasa de criminalidad per cápita en la ciudad.")
     ZN: float = Field(..., description="Proporción de terrenos residenciales zonificados para lotes grandes.")
     INDUS: float = Field(..., description="Proporción de acres de negocios no minoristas por ciudad.")
@@ -24,10 +28,16 @@ class PredictRequest(BaseModel):
     LSTAT: float = Field(..., description="% de población con bajo estatus socioeconómico.")
 
 class PredictResponse(BaseModel):
+    """
+    Esquema para la respuesta de predicción.
+    """
     id: str = Field(..., description="ID único de la predicción.")
     predicted_price: float = Field(..., description="Precio estimado de la vivienda en miles de dólares.")
 
 class FeedbackRequest(BaseModel):
+    """
+    Esquema para la solicitud de feedback.
+    """
     id: str = Field(..., description="ID de la predicción generada por /predict.")
     real_price: float = Field(..., description="Valor real observado para la predicción.")
 

@@ -1,10 +1,11 @@
+# Nombre del workflow
 name: Retrain and Build Docker Image
 
 on:
   workflow_dispatch: # Permite lanzarlo manualmente
 
 jobs:
-  # -- Entrenar y subir el modelo ---
+  # Entrenar y subir el modelo 
   retrain:
     runs-on: ubuntu-latest
     
