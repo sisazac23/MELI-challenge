@@ -412,7 +412,7 @@ graph TD
     subgraph "Monitoreo y Evaluación"
         B(evaluate.yml)
         B -- "Manualmente o por Cron" --> B1("python -m mlops_housing.evaluate")
-        B1 -- "Analiza rendimiento" --> B2{Degradacion (exit code 2)}
+        B1 -- "Analiza rendimiento" --> B2{"Degradacion? (exit code 2)"}
     end
 
     subgraph "CD Pipeline"
@@ -424,7 +424,6 @@ graph TD
 
     B2 -- Sí --> C
     B2 -- No --> D[Proceso finalizado]
-```
 
 ---
 
@@ -449,7 +448,7 @@ graph TD
 |--------------|-------------------------------------------------------------------------------------------|
 | GitHub Copilot | Ayuda en autocompletado y generación parcial de código. |
 | Gemini | Evaluación y recomendaciones sobre la estructura del repositorio. |
-| ChatGPT | Diseño asistido del pipeline CI/CD, construcción de workflows YAML, explicación MLOps. |
+| ChatGPT | Diseño asistido del pipeline CI/CD, construcción de workflows YAML, debugging de evaluate y revisor readme|
 
 
 
